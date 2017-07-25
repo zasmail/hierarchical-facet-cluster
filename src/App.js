@@ -7,14 +7,9 @@ import {
   RefinementList,
   HierarchicalMenu
 } from 'react-instantsearch/dom';
-
+// Import the connector
 import {
-  connectSearchBox,
-  connectRefinementList,
   connectHierarchicalMenu,
-  connectSortBy,
-  connectInfiniteHits,
-  connectCurrentRefinements,
 } from 'react-instantsearch/connectors';
 
 const Hit = ({hit}) =>
@@ -37,8 +32,11 @@ const Hit = ({hit}) =>
     </div>
   </article>
 
+//The connector definition:
 const NestedList = function({ id, items, refine }) {
   function findHierarchy(items){
+    //recursive function to find most specific items that should be displayed
+    //items is a nested object of lvl0 with lvl1 as a nested object
     if(items.length == 0){
       return items;
     }
@@ -55,6 +53,7 @@ const NestedList = function({ id, items, refine }) {
     <div className="faf-tabs-and-content-container">
       <ul className="image-facets-pills">{
         findHierarchy(items).map((item, idx) =>
+        //define the pills
         <li
           className="image-facets-pill"
           onClick={e=> {
@@ -74,6 +73,8 @@ const NestedList = function({ id, items, refine }) {
 
 const Content = () =>
   <div className="results-wrapper">
+    //add the widget/connector
+    // params can be found here: https://community.algolia.com/react-instantsearch/connectors/connectHierarchicalMenu.html
     <ConnectedNestedList
       limitMax="8"
       limitMin="8"
@@ -102,7 +103,7 @@ class App extends Component {
   }
 }
 
+// define this:
 const ConnectedNestedList = connectHierarchicalMenu(NestedList);
-
 
 export default App;
