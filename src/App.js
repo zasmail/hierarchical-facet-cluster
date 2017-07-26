@@ -37,6 +37,9 @@ const NestedList = function({ id, items, refine }) {
   function findHierarchy(items){
     //recursive function to find most specific items that should be displayed
     //items is a nested object of lvl0 with lvl1 as a nested object
+    if(items == null){
+      return [];
+    }
     if(items.length == 0){
       return items;
     }
