@@ -11,6 +11,81 @@ import {
 import {
   connectHierarchicalMenu,
 } from 'react-instantsearch/connectors';
+import qs from "qs";
+import PropTypes from "prop-types";
+
+const updateAfter = 700;
+
+const createURL = state => `?${qs.stringify(state)}`;
+
+const searchStateToUrl = (props, searchState) =>
+  searchState ? `${props.location.pathname}${createURL(searchState)}` : "";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      searchState: qs.parse(props.location.search.slice(1)),
+      showMore: false
+    };
+  }
+
+  onSearchStateChange = searchState => {
+    clearTimeout(this.debouncedSetState);
+    this.debouncedSetState = setTimeout(() => {
+      this.props.history.push(
+        searchStateToUrl(this.props, searchState),
+        searchState
+      );
+    }, updateAfter);
+    this.setState({ searchState });
+  };
+
+  onShowMore = () => {
+    this.setState({showMore: !this.state.showMore})
+  }
+
+  render() {
+    return (
+      <InstantSearch
+       appId="latency"
+       apiKey="3d9875e51fbd20c7754e65422f7ce5e1"
+       indexName="instant_search"
+       searchState={this.state.searchState}
+       onSearchStateChange={this.onSearchStateChange.bind(this)}
+       createURL={createURL}
+     >
+       <header className="header">
+         <SearchBox translation={{placeholder: 'Search For Product'}}/>
+       </header>
+       <div className="content-wrapper">
+         <div className="results-wrapper">
+           {/* add the widget/connector
+           params can be found here: https://community.algolia.com/react-instantsearch/connectors/connectHierarchicalMenu.html */}
+           <ConnectedNestedList
+             limitMax={80}
+             limitMin={8}
+             showMore={this.state.showMore}
+             onShowMore={this.onShowMore}
+             transformItems={ (item) => item }
+             attributes={['hierarchicalCategories.lvl0', 'hierarchicalCategories.lvl1', 'hierarchicalCategories.lvl2', 'hierarchicalCategories.lvl3']}
+           />
+           <Hits hitComponent={Hit}/>
+         </div>
+       </div>
+
+    </InstantSearch>
+
+    );
+  }
+}
+
+App.propTypes = {
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired
+  }),
+  location: PropTypes.object.isRequired
+};
 
 const Hit = ({hit}) =>
   <article className="hit">
@@ -33,10 +108,10 @@ const Hit = ({hit}) =>
   </article>
 
 //The connector definition:
-const NestedList = function({ id, items, refine }) {
+const NestedList = function({ id, items, refine, showMore, onShowMore }) {
   function findHierarchy(items){
-    //recursive function to find most specific items that should be displayed
-    //items is a nested object of lvl0 with lvl1 as a nested object
+    {/*recursive function to find most specific items that should be displayed
+    items is a nested object of lvl0 with lvl1 as a nested object */}
     if(items == null){
       return [];
     }
@@ -70,41 +145,14 @@ const NestedList = function({ id, items, refine }) {
           </span>
         </li>
       )}</ul>
+    <button onClick={e=> {
+      e.preventDefault();
+      onShowMore();
+    }}>{showMore ? "Show Less" : "Show More"}</button>
+
     </div>
   );
 };
-
-const Content = () =>
-  <div className="results-wrapper">
-    //add the widget/connector
-    // params can be found here: https://community.algolia.com/react-instantsearch/connectors/connectHierarchicalMenu.html
-    <ConnectedNestedList
-      limitMax="8"
-      limitMin="8"
-      attributes={['hierarchicalCategories.lvl0', 'hierarchicalCategories.lvl1', 'hierarchicalCategories.lvl2', 'hierarchicalCategories.lvl3']}
-    />
-    <Hits hitComponent={Hit}/>
-  </div>
-
-class App extends Component {
-  render() {
-    return (
-      <InstantSearch
-       appId="latency"
-       apiKey="3d9875e51fbd20c7754e65422f7ce5e1"
-       indexName="instant_search">
-       <header className="header">
-         <SearchBox translation={{placeholder: 'Search For Product'}}/>
-       </header>
-       <div className="content-wrapper">
-         <Content />
-       </div>
-
-    </InstantSearch>
-
-    );
-  }
-}
 
 // define this:
 const ConnectedNestedList = connectHierarchicalMenu(NestedList);
